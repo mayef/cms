@@ -9,9 +9,12 @@ import (
 func TestEncrypt(t *testing.T) {
 	modes := []int{
 		EncryptionAlgorithmDESCBC,
+		EncryptionAlgorithmDESEDE3CBC,
 		EncryptionAlgorithmAES128CBC,
+		EncryptionAlgorithmAES192CBC,
 		EncryptionAlgorithmAES256CBC,
 		EncryptionAlgorithmAES128GCM,
+		EncryptionAlgorithmAES192GCM,
 		EncryptionAlgorithmAES256GCM,
 	}
 	sigalgs := []x509.SignatureAlgorithm{
@@ -50,7 +53,13 @@ func TestEncrypt(t *testing.T) {
 func TestEncryptUsingPSK(t *testing.T) {
 	modes := []int{
 		EncryptionAlgorithmDESCBC,
+		EncryptionAlgorithmDESEDE3CBC,
+		EncryptionAlgorithmAES128CBC,
+		EncryptionAlgorithmAES192CBC,
+		EncryptionAlgorithmAES256CBC,
 		EncryptionAlgorithmAES128GCM,
+		EncryptionAlgorithmAES192GCM,
+		EncryptionAlgorithmAES256GCM,
 	}
 
 	for _, mode := range modes {
@@ -61,8 +70,20 @@ func TestEncryptUsingPSK(t *testing.T) {
 		switch mode {
 		case EncryptionAlgorithmDESCBC:
 			key = []byte("64BitKey")
+		case EncryptionAlgorithmDESEDE3CBC:
+			key = []byte("PM%0:o=T'^?F!h}$ A7+]/0\"")
+		case EncryptionAlgorithmAES128CBC:
+			key = []byte("Wp%8{&1/%3=G?aXc")
+		case EncryptionAlgorithmAES192CBC:
+			key = []byte("PM%0:o=T'^?F!h}$ A7+]/0\"")
+		case EncryptionAlgorithmAES256CBC:
+			key = []byte("joKp7WluQRrx1ZtLuqnpZUyhHU1CS73b")
 		case EncryptionAlgorithmAES128GCM:
-			key = []byte("128BitKey4AESGCM")
+			key = []byte("Wp%8{&1/%3=G?aXc")
+		case EncryptionAlgorithmAES192GCM:
+			key = []byte("PM%0:o=T'^?F!h}$ A7+]/0\"")
+		case EncryptionAlgorithmAES256GCM:
+			key = []byte("joKp7WluQRrx1ZtLuqnpZUyhHU1CS73b")
 		}
 		ciphertext, err := EncryptUsingPSK(plaintext, key)
 		if err != nil {
