@@ -43,38 +43,38 @@ type encryptedContentInfo struct {
 type EncryptionAlgorithm int
 
 const (
-	// EncryptionAlgorithmDESCBC is the DES CBC encryption algorithm
-	EncryptionAlgorithmDESCBC = EncryptionAlgorithm(iota)
+	// DESCBC is the DES CBC encryption algorithm
+	DESCBC = EncryptionAlgorithm(iota)
 
-	// EncryptionAlgorithmDESEDE3CBC is the 3DES CBC encryption algorithm
-	EncryptionAlgorithmDESEDE3CBC
+	// DESEDE3CBC is the 3DES CBC encryption algorithm
+	DESEDE3CBC
 
-	// EncryptionAlgorithmAES128CBC is the AES 128 bits with CBC encryption algorithm
+	// AES128CBC is the AES 128 bits with CBC encryption algorithm
 	// Avoid this algorithm unless required for interoperability; use AES GCM instead.
-	EncryptionAlgorithmAES128CBC
+	AES128CBC
 
-	// EncryptionAlgorithmAES192CBC is the AES 192 bits with CBC encryption algorithm
+	// AES192CBC is the AES 192 bits with CBC encryption algorithm
 	// Avoid this algorithm unless required for interoperability; use AES GCM instead.
-	EncryptionAlgorithmAES192CBC
+	AES192CBC
 
-	// EncryptionAlgorithmAES256CBC is the AES 256 bits with CBC encryption algorithm
+	// AES256CBC is the AES 256 bits with CBC encryption algorithm
 	// Avoid this algorithm unless required for interoperability; use AES GCM instead.
-	EncryptionAlgorithmAES256CBC
+	AES256CBC
 
-	// EncryptionAlgorithmAES128GCM is the AES 128 bits with GCM encryption algorithm
-	EncryptionAlgorithmAES128GCM
+	// AES128GCM is the AES 128 bits with GCM encryption algorithm
+	AES128GCM
 
-	// EncryptionAlgorithmAES192GCM is the AES 192 bits with GCM encryption algorithm
-	EncryptionAlgorithmAES192GCM
+	// AES192GCM is the AES 192 bits with GCM encryption algorithm
+	AES192GCM
 
-	// EncryptionAlgorithmAES256GCM is the AES 256 bits with GCM encryption algorithm
-	EncryptionAlgorithmAES256GCM
+	// AES256GCM is the AES 256 bits with GCM encryption algorithm
+	AES256GCM
 )
 
 // ContentEncryptionAlgorithm determines the algorithm used to encrypt the
 // plaintext message. Change the value of this variable to change which
 // algorithm is used in the Encrypt() function.
-var ContentEncryptionAlgorithm = EncryptionAlgorithmDESCBC
+var ContentEncryptionAlgorithm = DESCBC
 
 // ErrUnsupportedEncryptionAlgorithm is returned when attempting to encrypt
 // content with an unsupported algorithm.
@@ -95,13 +95,13 @@ func encryptAESGCM(content []byte, key []byte) ([]byte, *encryptedContentInfo, e
 	var keyLen int
 	var algID asn1.ObjectIdentifier
 	switch ContentEncryptionAlgorithm {
-	case EncryptionAlgorithmAES128GCM:
+	case AES128GCM:
 		keyLen = 16
 		algID = OIDEncryptionAlgorithmAES128GCM
-	case EncryptionAlgorithmAES192GCM:
+	case AES192GCM:
 		keyLen = 24
 		algID = OIDEncryptionAlgorithmAES192GCM
-	case EncryptionAlgorithmAES256GCM:
+	case AES256GCM:
 		keyLen = 32
 		algID = OIDEncryptionAlgorithmAES256GCM
 	default:
@@ -256,13 +256,13 @@ func encryptAESCBC(content []byte, key []byte) ([]byte, *encryptedContentInfo, e
 	var keyLen int
 	var algID asn1.ObjectIdentifier
 	switch ContentEncryptionAlgorithm {
-	case EncryptionAlgorithmAES128CBC:
+	case AES128CBC:
 		keyLen = 16
 		algID = OIDEncryptionAlgorithmAES128CBC
-	case EncryptionAlgorithmAES192CBC:
+	case AES192CBC:
 		keyLen = 24
 		algID = OIDEncryptionAlgorithmAES192CBC
-	case EncryptionAlgorithmAES256CBC:
+	case AES256CBC:
 		keyLen = 32
 		algID = OIDEncryptionAlgorithmAES256CBC
 	default:
@@ -330,21 +330,21 @@ func Encrypt(content []byte, recipients []*x509.Certificate) ([]byte, error) {
 
 	// Apply chosen symmetric encryption method
 	switch ContentEncryptionAlgorithm {
-	case EncryptionAlgorithmDESCBC:
+	case DESCBC:
 		key, eci, err = encryptDESCBC(content, nil)
-	case EncryptionAlgorithmDESEDE3CBC:
+	case DESEDE3CBC:
 		key, eci, err = encryptDESEDE3CBC(content, nil)
-	case EncryptionAlgorithmAES128CBC:
+	case AES128CBC:
 		fallthrough
-	case EncryptionAlgorithmAES192CBC:
+	case AES192CBC:
 		fallthrough
-	case EncryptionAlgorithmAES256CBC:
+	case AES256CBC:
 		key, eci, err = encryptAESCBC(content, nil)
-	case EncryptionAlgorithmAES128GCM:
+	case AES128GCM:
 		fallthrough
-	case EncryptionAlgorithmAES192GCM:
+	case AES192GCM:
 		fallthrough
-	case EncryptionAlgorithmAES256GCM:
+	case AES256GCM:
 		key, eci, err = encryptAESGCM(content, nil)
 	default:
 		return nil, ErrUnsupportedEncryptionAlgorithm
@@ -408,21 +408,21 @@ func EncryptUsingPSK(content []byte, key []byte) ([]byte, error) {
 
 	// Apply chosen symmetric encryption method
 	switch ContentEncryptionAlgorithm {
-	case EncryptionAlgorithmDESCBC:
+	case DESCBC:
 		_, eci, err = encryptDESCBC(content, key)
-	case EncryptionAlgorithmDESEDE3CBC:
+	case DESEDE3CBC:
 		_, eci, err = encryptDESEDE3CBC(content, key)
-	case EncryptionAlgorithmAES128CBC:
+	case AES128CBC:
 		fallthrough
-	case EncryptionAlgorithmAES192CBC:
+	case AES192CBC:
 		fallthrough
-	case EncryptionAlgorithmAES256CBC:
+	case AES256CBC:
 		_, eci, err = encryptAESCBC(content, key)
-	case EncryptionAlgorithmAES128GCM:
+	case AES128GCM:
 		fallthrough
-	case EncryptionAlgorithmAES192GCM:
+	case AES192GCM:
 		fallthrough
-	case EncryptionAlgorithmAES256GCM:
+	case AES256GCM:
 		_, eci, err = encryptAESGCM(content, key)
 
 	default:
