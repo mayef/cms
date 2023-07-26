@@ -3,7 +3,6 @@ package pkcs7
 import (
 	"bytes"
 	"crypto"
-	"crypto/dsa"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -24,7 +23,7 @@ type SignedData struct {
 }
 
 // NewSignedData takes data and initializes a PKCS7 SignedData struct that is
-// ready to be signed via AddSigner. The digest algorithm is set to SHA1 by default
+// ready to be signed via AddSigner. The digest algorithm is set to SHA256 by default
 // and can be changed by calling SetDigestAlgorithm.
 func NewSignedData(data []byte) (*SignedData, error) {
 	content, err := asn1.Marshal(data)
@@ -39,7 +38,7 @@ func NewSignedData(data []byte) (*SignedData, error) {
 		ContentInfo: ci,
 		Version:     1,
 	}
-	return &SignedData{sd: sd, data: data, digestOid: OIDDigestAlgorithmSHA1}, nil
+	return &SignedData{sd: sd, data: data, digestOid: OIDDigestAlgorithmSHA256}, nil
 }
 
 // SignerInfoConfig are optional values to include when adding a signer
@@ -213,28 +212,16 @@ func (sd *SignedData) SignWithoutAttr(ee *x509.Certificate, pkey crypto.PrivateK
 	h := hash.New()
 	h.Write(sd.data)
 	sd.messageDigest = h.Sum(nil)
-	switch pkey := pkey.(type) {
-	case *dsa.PrivateKey:
-		// dsa doesn't implement crypto.Signer so we make a special case
-		// https://github.com/golang/go/issues/27889
-		r, s, err := dsa.Sign(rand.Reader, pkey, sd.messageDigest)
-		if err != nil {
-			return err
-		}
-		signature, err = asn1.Marshal(dsaSignature{r, s})
-		if err != nil {
-			return err
-		}
-	default:
-		key, ok := pkey.(crypto.Signer)
-		if !ok {
-			return errors.New("pkcs7: private key does not implement crypto.Signer")
-		}
-		signature, err = key.Sign(rand.Reader, sd.messageDigest, hash)
-		if err != nil {
-			return err
-		}
+
+	key, ok := pkey.(crypto.Signer)
+	if !ok {
+		return errors.New("pkcs7: private key does not implement crypto.Signer")
 	}
+	signature, err = key.Sign(rand.Reader, sd.messageDigest, hash)
+	if err != nil {
+		return err
+	}
+
 	var ias issuerAndSerial
 	ias.SerialNumber = ee.SerialNumber
 	// no parent, the issue is the end-entity cert itself
@@ -359,26 +346,11 @@ func signAttributes(attrs []attribute, pkey crypto.PrivateKey, digestAlg crypto.
 	h.Write(attrBytes)
 	hash := h.Sum(nil)
 
-	// dsa doesn't implement crypto.Signer so we make a special case
-	// https://github.com/golang/go/issues/27889
-	switch pkey := pkey.(type) {
-	case *dsa.PrivateKey:
-		r, s, err := dsa.Sign(rand.Reader, pkey, hash)
-		if err != nil {
-			return nil, err
-		}
-		return asn1.Marshal(dsaSignature{r, s})
-	}
-
 	key, ok := pkey.(crypto.Signer)
 	if !ok {
 		return nil, errors.New("pkcs7: private key does not implement crypto.Signer")
 	}
 	return key.Sign(rand.Reader, hash, digestAlg)
-}
-
-type dsaSignature struct {
-	R, S *big.Int
 }
 
 // concats and wraps the certificates in the RawValue structure

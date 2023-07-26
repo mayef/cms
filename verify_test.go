@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -452,16 +451,14 @@ A ship in port is safe,
 but that's not what ships are built for.
 -- Grace Hopper`)
 	// write the content to a temp file
-	tmpContentFile, err := ioutil.TempFile("", "TestSignWithOpenSSLAndVerify_content")
+	tmpContentFile, err := os.CreateTemp("", "TestSignWithOpenSSLAndVerify_content")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ioutil.WriteFile(tmpContentFile.Name(), content, 0755)
+	os.WriteFile(tmpContentFile.Name(), content, 0755)
 	sigalgs := []x509.SignatureAlgorithm{
-		x509.SHA1WithRSA,
 		x509.SHA256WithRSA,
 		x509.SHA512WithRSA,
-		x509.ECDSAWithSHA1,
 		x509.ECDSAWithSHA256,
 		x509.ECDSAWithSHA384,
 		x509.ECDSAWithSHA512,
@@ -479,7 +476,7 @@ but that's not what ships are built for.
 				t.Fatalf("test %s/%s: cannot generate intermediate cert: %s", sigalgroot, sigalginter, err)
 			}
 			// write the intermediate cert to a temp file
-			tmpInterCertFile, err := ioutil.TempFile("", "TestSignWithOpenSSLAndVerify_intermediate")
+			tmpInterCertFile, err := os.CreateTemp("", "TestSignWithOpenSSLAndVerify_intermediate")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -496,7 +493,7 @@ but that's not what ships are built for.
 				}
 
 				// write the signer cert to a temp file
-				tmpSignerCertFile, err := ioutil.TempFile("", "TestSignWithOpenSSLAndVerify_signer")
+				tmpSignerCertFile, err := os.CreateTemp("", "TestSignWithOpenSSLAndVerify_signer")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -508,7 +505,7 @@ but that's not what ships are built for.
 				fd.Close()
 
 				// write the signer key to a temp file
-				tmpSignerKeyFile, err := ioutil.TempFile("", "TestSignWithOpenSSLAndVerify_key")
+				tmpSignerKeyFile, err := os.CreateTemp("", "TestSignWithOpenSSLAndVerify_key")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -532,7 +529,7 @@ but that's not what ships are built for.
 				fd.Close()
 
 				// write the root cert to a temp file
-				tmpSignedFile, err := ioutil.TempFile("", "TestSignWithOpenSSLAndVerify_signature")
+				tmpSignedFile, err := os.CreateTemp("", "TestSignWithOpenSSLAndVerify_signature")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -547,7 +544,7 @@ but that's not what ships are built for.
 				}
 
 				// verify the signed content
-				pemSignature, err := ioutil.ReadFile(tmpSignedFile.Name())
+				pemSignature, err := os.ReadFile(tmpSignedFile.Name())
 				if err != nil {
 					t.Fatal(err)
 				}

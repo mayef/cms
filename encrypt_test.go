@@ -18,8 +18,8 @@ func TestEncrypt(t *testing.T) {
 		EncryptionAlgorithmAES256GCM,
 	}
 	sigalgs := []x509.SignatureAlgorithm{
-		x509.SHA1WithRSA,
 		x509.SHA256WithRSA,
+		x509.SHA384WithRSA,
 		x509.SHA512WithRSA,
 	}
 	for _, mode := range modes {

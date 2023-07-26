@@ -5,6 +5,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/des"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -454,10 +456,44 @@ func marshalEncryptedContent(content []byte) asn1.RawValue {
 }
 
 func encryptKey(key []byte, recipient *x509.Certificate) ([]byte, error) {
-	if pub := recipient.PublicKey.(*rsa.PublicKey); pub != nil {
+	switch pub := recipient.PublicKey.(type) {
+	case *rsa.PublicKey:
 		return rsa.EncryptPKCS1v15(rand.Reader, pub, key)
+	case *ecdsa.PublicKey:
+		// 创建临时私钥
+		tempPrivKey, err := ecdsa.GenerateKey(pub.Curve, rand.Reader)
+		if err != nil {
+			return nil, err
+		}
+		// 生成共享密钥
+		x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, tempPrivKey.D.Bytes())
+		sharedSecret := x.Bytes()
+		// 使用共享密钥对原始密钥进行加密
+		cipher, err := encryptWithSharedSecret(sharedSecret, key)
+		if err != nil {
+			return nil, err
+		}
+		// 返回临时公钥和密文
+		return append(elliptic.Marshal(pub.Curve, tempPrivKey.PublicKey.X, tempPrivKey.PublicKey.Y), cipher...), nil
+	default:
+		return nil, ErrUnsupportedAlgorithm
 	}
-	return nil, ErrUnsupportedAlgorithm
+}
+
+func encryptWithSharedSecret(sharedSecret, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(sharedSecret)
+	if err != nil {
+		return nil, err
+	}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonce := make([]byte, aesgcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+	return aesgcm.Seal(nonce, nonce, key, nil), nil
 }
 
 func pad(data []byte, blocklen int) ([]byte, error) {

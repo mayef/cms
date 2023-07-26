@@ -4,7 +4,6 @@ package pkcs7
 import (
 	"bytes"
 	"crypto"
-	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
@@ -13,8 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-
-	_ "crypto/sha1" // for crypto.SHA1
 )
 
 // PKCS7 Represents a PKCS7 structure
@@ -49,25 +46,30 @@ var (
 	OIDAttributeSigningTime   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
 
 	// Digest Algorithms
-	OIDDigestAlgorithmSHA1   = asn1.ObjectIdentifier{1, 3, 14, 3, 2, 26}
-	OIDDigestAlgorithmSHA256 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 1}
-	OIDDigestAlgorithmSHA384 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 2}
-	OIDDigestAlgorithmSHA512 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 3}
+	OIDDigestAlgorithmSHA256     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 1}
+	OIDDigestAlgorithmSHA384     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 2}
+	OIDDigestAlgorithmSHA512     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 3}
+	OIDDigestAlgorithmSHA224     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 4}
+	OIDDigestAlgorithmSHAT224    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 7}
+	OIDDigestAlgorithmSHAT256    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 8}
+	OIDDigestAlgorithmSHAT384    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 9}
+	OIDDigestAlgorithmSHAT512    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 10}
+	OIDDigestAlgorithmBlake2s256 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 1722, 12, 2, 2, 8}
+	OIDDigestAlgorithmBlake2b256 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 1722, 12, 2, 1, 8}
+	OIDDigestAlgorithmBlake2b384 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 1722, 12, 2, 1, 12}
+	OIDDigestAlgorithmBlake2b512 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 1722, 12, 2, 1, 16}
 
-	OIDDigestAlgorithmDSA     = asn1.ObjectIdentifier{1, 2, 840, 10040, 4, 1}
-	OIDDigestAlgorithmDSASHA1 = asn1.ObjectIdentifier{1, 2, 840, 10040, 4, 3}
-
-	OIDDigestAlgorithmECDSASHA1   = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 1}
 	OIDDigestAlgorithmECDSASHA256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 2}
 	OIDDigestAlgorithmECDSASHA384 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
 	OIDDigestAlgorithmECDSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
+	OIDDigestAlgorithmECDSASHA224 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 1}
 
 	// Signature Algorithms
 	OIDEncryptionAlgorithmRSA       = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
-	OIDEncryptionAlgorithmRSASHA1   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 5}
 	OIDEncryptionAlgorithmRSASHA256 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 11}
 	OIDEncryptionAlgorithmRSASHA384 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 12}
 	OIDEncryptionAlgorithmRSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 13}
+	OIDEncryptionAlgorithmRSASHA224 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 14}
 
 	OIDEncryptionAlgorithmECDSAP256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 3, 1, 7}
 	OIDEncryptionAlgorithmECDSAP384 = asn1.ObjectIdentifier{1, 3, 132, 0, 34}
@@ -86,16 +88,30 @@ var (
 
 func getHashForOID(oid asn1.ObjectIdentifier) (crypto.Hash, error) {
 	switch {
-	case oid.Equal(OIDDigestAlgorithmSHA1), oid.Equal(OIDDigestAlgorithmECDSASHA1),
-		oid.Equal(OIDDigestAlgorithmDSA), oid.Equal(OIDDigestAlgorithmDSASHA1),
-		oid.Equal(OIDEncryptionAlgorithmRSA):
-		return crypto.SHA1, nil
 	case oid.Equal(OIDDigestAlgorithmSHA256), oid.Equal(OIDDigestAlgorithmECDSASHA256):
 		return crypto.SHA256, nil
 	case oid.Equal(OIDDigestAlgorithmSHA384), oid.Equal(OIDDigestAlgorithmECDSASHA384):
 		return crypto.SHA384, nil
 	case oid.Equal(OIDDigestAlgorithmSHA512), oid.Equal(OIDDigestAlgorithmECDSASHA512):
 		return crypto.SHA512, nil
+	case oid.Equal(OIDDigestAlgorithmSHA224), oid.Equal(OIDDigestAlgorithmECDSASHA224):
+		return crypto.SHA224, nil
+	case oid.Equal(OIDDigestAlgorithmSHAT224):
+		return crypto.SHA3_224, nil
+	case oid.Equal(OIDDigestAlgorithmSHAT256):
+		return crypto.SHA3_256, nil
+	case oid.Equal(OIDDigestAlgorithmSHAT384):
+		return crypto.SHA3_384, nil
+	case oid.Equal(OIDDigestAlgorithmSHAT512):
+		return crypto.SHA3_512, nil
+	case oid.Equal(OIDDigestAlgorithmBlake2s256):
+		return crypto.BLAKE2s_256, nil
+	case oid.Equal(OIDDigestAlgorithmBlake2b256):
+		return crypto.BLAKE2b_256, nil
+	case oid.Equal(OIDDigestAlgorithmBlake2b384):
+		return crypto.BLAKE2b_384, nil
+	case oid.Equal(OIDDigestAlgorithmBlake2b512):
+		return crypto.BLAKE2b_512, nil
 	}
 	return crypto.Hash(0), ErrUnsupportedAlgorithm
 }
@@ -104,8 +120,6 @@ func getHashForOID(oid asn1.ObjectIdentifier) (crypto.Hash, error) {
 // and returns the corresponding OID digest algorithm
 func getDigestOIDForSignatureAlgorithm(digestAlg x509.SignatureAlgorithm) (asn1.ObjectIdentifier, error) {
 	switch digestAlg {
-	case x509.SHA1WithRSA, x509.ECDSAWithSHA1:
-		return OIDDigestAlgorithmSHA1, nil
 	case x509.SHA256WithRSA, x509.ECDSAWithSHA256:
 		return OIDDigestAlgorithmSHA256, nil
 	case x509.SHA384WithRSA, x509.ECDSAWithSHA384:
@@ -126,28 +140,26 @@ func getOIDForEncryptionAlgorithm(pkey crypto.PrivateKey, OIDDigestAlg asn1.Obje
 			return OIDEncryptionAlgorithmRSA, nil
 		case OIDDigestAlg.Equal(OIDEncryptionAlgorithmRSA):
 			return OIDEncryptionAlgorithmRSA, nil
-		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA1):
-			return OIDEncryptionAlgorithmRSASHA1, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA256):
 			return OIDEncryptionAlgorithmRSASHA256, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA384):
 			return OIDEncryptionAlgorithmRSASHA384, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA512):
 			return OIDEncryptionAlgorithmRSASHA512, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA224):
+			return OIDEncryptionAlgorithmRSASHA224, nil
 		}
 	case *ecdsa.PrivateKey:
 		switch {
-		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA1):
-			return OIDDigestAlgorithmECDSASHA1, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA256):
 			return OIDDigestAlgorithmECDSASHA256, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA384):
 			return OIDDigestAlgorithmECDSASHA384, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA512):
 			return OIDDigestAlgorithmECDSASHA512, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA224):
+			return OIDDigestAlgorithmECDSASHA224, nil
 		}
-	case *dsa.PrivateKey:
-		return OIDDigestAlgorithmDSA, nil
 	}
 	return nil, fmt.Errorf("pkcs7: cannot convert encryption algorithm to oid, unknown private key type %T", pkey)
 

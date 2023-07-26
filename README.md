@@ -67,3 +67,6 @@ func SignAndDetach(content []byte, cert *x509.Certificate, privkey *rsa.PrivateK
 
 ## Credits
 This is a fork of [fullsailor/pkcs7](https://github.com/fullsailor/pkcs7)
+
+## TODO
+1. Add support for ~~ECDSA and ~~ CMS with ECC
