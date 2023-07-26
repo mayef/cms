@@ -1,5 +1,5 @@
-// Package pkcs7 implements parsing and generation of some PKCS#7 structures.
-package pkcs7
+// Package cms implements parsing and generation of some PKCS#7 structures.
+package cms
 
 import (
 	"bytes"

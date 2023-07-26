@@ -1,4 +1,4 @@
-package pkcs7
+package cms
 
 import (
 	"crypto"

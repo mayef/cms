@@ -1,3 +1,3 @@
-module github.com/mayef/pkcs7
+module github.com/mayef/cms
 
 go 1.20
