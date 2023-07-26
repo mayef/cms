@@ -7,7 +7,7 @@ import (
 )
 
 func TestEncrypt(t *testing.T) {
-	modes := []int{
+	modes := []EncryptionAlgorithm{
 		EncryptionAlgorithmDESCBC,
 		EncryptionAlgorithmDESEDE3CBC,
 		EncryptionAlgorithmAES128CBC,
@@ -51,7 +51,7 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestEncryptUsingPSK(t *testing.T) {
-	modes := []int{
+	modes := []EncryptionAlgorithm{
 		EncryptionAlgorithmDESCBC,
 		EncryptionAlgorithmDESEDE3CBC,
 		EncryptionAlgorithmAES128CBC,

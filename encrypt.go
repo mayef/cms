@@ -40,9 +40,11 @@ type encryptedContentInfo struct {
 	EncryptedContent           asn1.RawValue `asn1:"tag:0,optional"`
 }
 
+type EncryptionAlgorithm int
+
 const (
 	// EncryptionAlgorithmDESCBC is the DES CBC encryption algorithm
-	EncryptionAlgorithmDESCBC = iota
+	EncryptionAlgorithmDESCBC = EncryptionAlgorithm(iota)
 
 	// EncryptionAlgorithmDESEDE3CBC is the 3DES CBC encryption algorithm
 	EncryptionAlgorithmDESEDE3CBC
