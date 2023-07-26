@@ -69,4 +69,5 @@ func SignAndDetach(content []byte, cert *x509.Certificate, privkey *rsa.PrivateK
 This is a fork of [fullsailor/pkcs7](https://github.com/fullsailor/pkcs7)
 
 ## TODO
+0. verify_test.go: refactor to use other digest algorithms than MD5 and SHA-1
 1. Add support for ~~ECDSA and ~~ CMS with ECC
