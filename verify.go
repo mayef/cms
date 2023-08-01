@@ -104,7 +104,7 @@ func verifySignatureAtTime(p7 *PKCS7, signer signerInfo, truststore *x509.CertPo
 			return err
 		}
 	}
-	sigalg, err := getSignatureAlgorithm(signer.DigestEncryptionAlgorithm, signer.DigestAlgorithm)
+	sigalg, err := GetSignatureAlgorithm(signer.DigestEncryptionAlgorithm, signer.DigestAlgorithm)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func verifySignature(p7 *PKCS7, signer signerInfo, truststore *x509.CertPool) (e
 			return err
 		}
 	}
-	sigalg, err := getSignatureAlgorithm(signer.DigestEncryptionAlgorithm, signer.DigestAlgorithm)
+	sigalg, err := GetSignatureAlgorithm(signer.DigestEncryptionAlgorithm, signer.DigestAlgorithm)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (err *MessageDigestMismatchError) Error() string {
 	return fmt.Sprintf("pkcs7: Message digest mismatch\n\tExpected: %X\n\tActual  : %X", err.ExpectedDigest, err.ActualDigest)
 }
 
-func getSignatureAlgorithm(digestEncryption, digest pkix.AlgorithmIdentifier) (SignatureAlgorithm, error) {
+func GetSignatureAlgorithm(digestEncryption, digest pkix.AlgorithmIdentifier) (SignatureAlgorithm, error) {
 	switch {
 	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmECDSASHA224):
 		return ECDSAWithSHA224, nil

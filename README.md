@@ -77,4 +77,4 @@ RSA, ECDSA
 SHA2, SHA3
 
 # Version
-1.1.1
+1.1.2
