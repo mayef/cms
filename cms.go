@@ -66,10 +66,20 @@ var (
 	OIDSignatureAlgorithmRSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 13}
 	OIDSignatureAlgorithmRSASHA224 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 14}
 
+	OIDSignatureAlgorithmRSASHAT224 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 13}
+	OIDSignatureAlgorithmRSASHAT256 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 14}
+	OIDSignatureAlgorithmRSASHAT384 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 15}
+	OIDSignatureAlgorithmRSASHAT512 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 16}
+
 	OIDSignatureAlgorithmECDSASHA256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 2}
 	OIDSignatureAlgorithmECDSASHA384 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
 	OIDSignatureAlgorithmECDSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
 	OIDSignatureAlgorithmECDSASHA224 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 1}
+
+	OIDSignatureAlgorithmECDSASHAT224 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 9}
+	OIDSignatureAlgorithmECDSASHAT256 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 10}
+	OIDSignatureAlgorithmECDSASHAT384 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 11}
+	OIDSignatureAlgorithmECDSASHAT512 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 12}
 
 	OIDSignatureAlgorithmED25519 = asn1.ObjectIdentifier{1, 3, 101, 112}
 
@@ -150,6 +160,14 @@ func getOIDForEncryptionAlgorithm(pkey crypto.PrivateKey, OIDDigestAlg asn1.Obje
 			return OIDSignatureAlgorithmRSASHA512, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA224):
 			return OIDSignatureAlgorithmRSASHA224, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT224):
+			return OIDSignatureAlgorithmRSASHAT224, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT256):
+			return OIDSignatureAlgorithmRSASHAT256, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT384):
+			return OIDSignatureAlgorithmRSASHAT384, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT512):
+			return OIDSignatureAlgorithmRSASHAT512, nil
 		}
 	case *ecdsa.PrivateKey:
 		switch {
@@ -161,6 +179,14 @@ func getOIDForEncryptionAlgorithm(pkey crypto.PrivateKey, OIDDigestAlg asn1.Obje
 			return OIDSignatureAlgorithmECDSASHA512, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA224):
 			return OIDSignatureAlgorithmECDSASHA224, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT224):
+			return OIDSignatureAlgorithmECDSASHAT224, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT256):
+			return OIDSignatureAlgorithmECDSASHAT256, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT384):
+			return OIDSignatureAlgorithmECDSASHAT384, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHAT512):
+			return OIDSignatureAlgorithmECDSASHAT512, nil
 		}
 	}
 	return nil, fmt.Errorf("pkcs7: cannot convert encryption algorithm to oid, unknown private key type %T", pkey)
