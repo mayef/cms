@@ -369,7 +369,7 @@ func Encrypt(content []byte, recipients []*x509.Certificate) ([]byte, error) {
 			Version:               0,
 			IssuerAndSerialNumber: ias,
 			KeyEncryptionAlgorithm: pkix.AlgorithmIdentifier{
-				Algorithm: OIDEncryptionAlgorithmRSA,
+				Algorithm: OIDSignatureAlgorithmRSA,
 			},
 			EncryptedKey: encrypted,
 		}
