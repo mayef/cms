@@ -461,7 +461,7 @@ func encryptKey(key []byte, recipient *x509.Certificate) ([]byte, error) {
 	switch pub := recipient.PublicKey.(type) {
 	case *rsa.PublicKey:
 		return rsa.EncryptPKCS1v15(rand.Reader, pub, key)
-	case *ecdsa.PublicKey:
+	case *ecdsa.PublicKey: // TODO: not ready, should not use ecdsa.PublicKey
 		// 创建临时私钥
 		tempPrivKey, err := ecdsa.GenerateKey(pub.Curve, rand.Reader)
 		if err != nil {
