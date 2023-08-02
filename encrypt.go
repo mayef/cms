@@ -14,6 +14,8 @@ import (
 	"encoding/asn1"
 	"errors"
 	"fmt"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 type envelopedData struct {
@@ -69,6 +71,8 @@ const (
 
 	// AES256GCM is the AES 256 bits with GCM encryption algorithm
 	AES256GCM
+
+	ChaCha20Poly1305
 )
 
 // ContentEncryptionAlgorithm determines the algorithm used to encrypt the
@@ -312,6 +316,44 @@ func encryptAESCBC(content []byte, key []byte) ([]byte, *encryptedContentInfo, e
 	return key, &eci, nil
 }
 
+func encryptChaCha20Poly1305(content []byte, key []byte) ([]byte, *encryptedContentInfo, error) {
+	if key == nil {
+		key = make([]byte, chacha20poly1305.KeySize)
+		if _, err := rand.Read(key); err != nil {
+			return nil, nil, err
+		}
+	} else if len(key) != chacha20poly1305.KeySize {
+		return nil, nil, errors.New("key length must be 32 bytes if provided")
+	}
+
+	// Create a new ChaCha20Poly1305 cipher
+	cipher, err := chacha20poly1305.New(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Generate a random nonce
+	nonce := make([]byte, chacha20poly1305.NonceSize)
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, nil, err
+	}
+
+	// Encrypt the content
+	encryptedContent := cipher.Seal(nil, nonce, content, nil)
+
+	// Create the encryptedContentInfo structure
+	encInfo := &encryptedContentInfo{
+		ContentType: OIDData,
+		ContentEncryptionAlgorithm: pkix.AlgorithmIdentifier{
+			Algorithm:  OIDEncryptionAlgorithmChaCha20Poly1305,
+			Parameters: asn1.RawValue{Tag: 4, Bytes: nonce},
+		},
+		EncryptedContent: marshalEncryptedContent(encryptedContent),
+	}
+
+	return key, encInfo, nil
+}
+
 // Encrypt creates and returns an envelope data PKCS7 structure with encrypted
 // recipient keys for each recipient public key.
 //
@@ -346,6 +388,8 @@ func Encrypt(content []byte, recipients []*x509.Certificate) ([]byte, error) {
 		fallthrough
 	case AES256GCM:
 		key, eci, err = encryptAESGCM(content, nil)
+	case ChaCha20Poly1305:
+		key, eci, err = encryptChaCha20Poly1305(content, nil)
 	default:
 		return nil, ErrUnsupportedEncryptionAlgorithm
 	}

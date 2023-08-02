@@ -75,6 +75,7 @@ This is a fork of [fullsailor/pkcs7](https://github.com/fullsailor/pkcs7)
 # Supported Algorithms
 RSA, ECDSA
 SHA2, SHA3
+DES, AES, ChaCha20Poly1305
 
 # Version
-1.1.2
+1.2.0
