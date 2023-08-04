@@ -40,9 +40,13 @@ var (
 	OIDSignedData             = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 2}
 	OIDEnvelopedData          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 3}
 	OIDEncryptedData          = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 6}
+	OIDCompressedData         = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 16, 1, 9}
 	OIDAttributeContentType   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 3}
 	OIDAttributeMessageDigest = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 4}
 	OIDAttributeSigningTime   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 5}
+
+	// Compression Algorithms
+	OIDCompressionAlgorithmZLIB = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 16, 3, 8}
 
 	// Digest Algorithms
 	OIDDigestAlgorithmSHA256     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 1}

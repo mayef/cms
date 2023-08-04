@@ -78,4 +78,4 @@ SHA2, SHA3
 DES, AES, ChaCha20Poly1305(TODO: decrypt)
 
 # Version
-1.2.1
+1.3.0
