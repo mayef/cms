@@ -4,32 +4,27 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/asn1"
+	"errors"
 	"io"
 )
 
-func Decompress(data []byte) ([]byte, error) {
-	// 1. parse ContentInfo
-	var contentInfo contentInfo
-	_, err := asn1.Unmarshal(data, &contentInfo)
-	if err != nil {
-		return nil, err
+var ErrNotCompressedContent = errors.New("pkcs7: content data is not a compressed data type")
+
+func (p7 *PKCS7) Decompress() ([]byte, error) {
+	// 1. convert to CompressedData
+	compressedData, ok := p7.raw.(compressedData)
+	if !ok {
+		return nil, ErrNotCompressedContent
 	}
 
-	// 2. parse CompressedData
-	var compressedData compressedData
-	_, err = asn1.Unmarshal(contentInfo.Content.Bytes, &compressedData)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. parse EncapsulatedContentInfo
+	// 2. parse EncapsulatedContentInfo
 	var encapsulatedContentInfo encapsulatedContentInfo
-	_, err = asn1.Unmarshal(compressedData.EncapContentInfo.EContent, &encapsulatedContentInfo)
+	_, err := asn1.Unmarshal(compressedData.EncapContentInfo.EContent, &encapsulatedContentInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	// 4. decompress using zlib
+	// 3. decompress using zlib
 	buf := bytes.NewBuffer(encapsulatedContentInfo.EContent)
 	r, err := zlib.NewReader(buf)
 	if err != nil {

@@ -12,13 +12,15 @@ import (
 	"encoding/asn1"
 	"errors"
 	"fmt"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 // ErrUnsupportedAlgorithm tells you when our quick dev assumptions have failed
 var ErrUnsupportedAlgorithm = errors.New("pkcs7: cannot decrypt data: only RSA, DES, AES supported")
 
 // ErrNotEncryptedContent is returned when attempting to Decrypt data that is not encrypted data
-var ErrNotEncryptedContent = errors.New("pkcs7: content data is a decryptable data type")
+var ErrNotEncryptedContent = errors.New("pkcs7: content data is not a decryptable data type")
 
 // Decrypt decrypts encrypted content info for recipient cert and private key
 func (p7 *PKCS7) Decrypt(cert *x509.Certificate, pkey crypto.PrivateKey) ([]byte, error) {
@@ -61,7 +63,8 @@ func (eci encryptedContentInfo) decrypt(key []byte) ([]byte, error) {
 		!alg.Equal(OIDEncryptionAlgorithmAES256CBC) &&
 		!alg.Equal(OIDEncryptionAlgorithmAES128GCM) &&
 		!alg.Equal(OIDEncryptionAlgorithmAES192GCM) &&
-		!alg.Equal(OIDEncryptionAlgorithmAES256GCM) {
+		!alg.Equal(OIDEncryptionAlgorithmAES256GCM) &&
+		!alg.Equal(OIDEncryptionAlgorithmChaCha20Poly1305) {
 		fmt.Printf("Unsupported Content Encryption Algorithm: %s\n", alg)
 		return nil, ErrUnsupportedAlgorithm
 	}
@@ -91,6 +94,8 @@ func (eci encryptedContentInfo) decrypt(key []byte) ([]byte, error) {
 	var err error
 
 	switch {
+	case alg.Equal(OIDEncryptionAlgorithmChaCha20Poly1305):
+		return decryptChaCha20Poly1305(cyphertext, key)
 	case alg.Equal(OIDEncryptionAlgorithmDESCBC):
 		block, err = des.NewCipher(key)
 	case alg.Equal(OIDEncryptionAlgorithmDESEDE3CBC):
@@ -178,4 +183,34 @@ func selectRecipientForCertificate(recipients []recipientInfo, cert *x509.Certif
 		}
 	}
 	return recipientInfo{}
+}
+
+func decryptChaCha20Poly1305(encrypted []byte, key []byte) ([]byte, error) {
+	var encInfo encryptedContentInfo
+
+	// ASN.1 decode the encrypted information
+	_, err := asn1.Unmarshal(encrypted, &encInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the nonce from the parameters
+	nonce := encInfo.ContentEncryptionAlgorithm.Parameters.Bytes
+
+	// Create a new ChaCha20Poly1305 cipher
+	cipher, err := chacha20poly1305.New(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the encrypted content
+	encryptedContent := encInfo.EncryptedContent.Bytes
+
+	// Decrypt the content
+	decryptedContent, err := cipher.Open(nil, nonce, encryptedContent, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return decryptedContent, nil
 }
