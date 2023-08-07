@@ -3,7 +3,6 @@ package cms
 import (
 	"bytes"
 	"compress/zlib"
-	"encoding/asn1"
 	"errors"
 	"io"
 )
@@ -17,15 +16,13 @@ func (p7 *PKCS7) Decompress() ([]byte, error) {
 		return nil, ErrNotCompressedContent
 	}
 
-	// 2. parse EncapsulatedContentInfo
-	var encapsulatedContentInfo encapsulatedContentInfo
-	_, err := asn1.Unmarshal(compressedData.EncapContentInfo.EContent, &encapsulatedContentInfo)
+	// 2. decode ber octet string to bytes
+	b, err := berOctStr2Bytes(compressedData.EncapContentInfo.EContent.Bytes)
 	if err != nil {
 		return nil, err
 	}
-
 	// 3. decompress using zlib
-	buf := bytes.NewBuffer(encapsulatedContentInfo.EContent)
+	buf := bytes.NewBuffer(b)
 	r, err := zlib.NewReader(buf)
 	if err != nil {
 		return nil, err

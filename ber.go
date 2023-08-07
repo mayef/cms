@@ -3,6 +3,7 @@ package cms
 import (
 	"bytes"
 	"errors"
+	"fmt"
 )
 
 var encodeIndent = 0
@@ -268,4 +269,83 @@ func isIndefiniteTermination(ber []byte, offset int) (bool, error) {
 
 func debugprint(format string, a ...interface{}) {
 	//fmt.Printf(format, a)
+}
+
+func berOctStr2Bytes(data []byte) ([]byte, error) {
+	// Create a variable to store the output byte array.
+	output := make([]byte, 0)
+	offset := 0
+
+	// Read the first byte of the input byte array and assign it to a variable named tag.
+	tag := data[offset]
+	offset++
+	// constructed octet string
+	if tag != 0x24 {
+		return nil, fmt.Errorf("berOctStr2Bytes: Expected tag 0x24, got 0x%02x", tag)
+	}
+
+	// Move offset to the first byte of the first primitive octet string.
+	length := data[offset]
+	offset++
+	if length&0x8f != 0 {
+		lengthLength := int(length & 0x7f)
+		l := 0
+		for j := 0; j < lengthLength; j++ {
+			l = l*256 + int(data[offset])
+			offset++
+		}
+	}
+
+	// Create a loop that iterates until the end of the input byte array or an error is encountered.
+	for i := offset; i < len(data); {
+		// Read the first byte of the input byte array and assign it to a variable named tag.
+		tag := data[i]
+
+		// Check if tag is equal to primitive octet string.
+		if tag != 0x04 {
+			return nil, fmt.Errorf("berOctStr2Bytes: Expected tag&0x04 != 0, got 0x%02x", tag)
+		}
+
+		// Read the second byte of the input byte array and assign it to a variable named length.
+		length := data[i+1]
+
+		// Check if length is equal to 0x80, which means the element has an indefinite length.
+		if length == 0x80 {
+			// Find an end-of-content marker (0x00 0x00) to determine the end of the value.
+			var j = i + 2
+			if j+1 >= len(data) {
+				return nil, errors.New("berOctStr2Bytes: Invalid BER format")
+			}
+			for j+1 < len(data) {
+				if data[j] == 0x00 && data[j+1] == 0x00 {
+					break
+				}
+				j++
+			}
+
+			// Append the value bytes to the output byte array.
+			output = append(output, data[i+2:j]...)
+			i = j + 2
+		} else if length&0x80 == 0x80 && length&0x7f != 0 {
+			// Check if length has an extended marker.
+			// If so, take the low 7 bits of the length as the number of bytes in the extended length.
+			// Read the extended length and assign it to a variable named l.
+			lengthLength := int(length & 0x7f)
+			l := 0
+			for j := 0; j < lengthLength; j++ {
+				l = l*256 + int(data[i+2+j])
+			}
+
+			// Append the value bytes to the output byte array.
+			output = append(output, data[i+2+lengthLength:i+2+lengthLength+l]...)
+			i = i + 2 + lengthLength + l
+		} else {
+			// Append the value bytes to the output byte array.
+			output = append(output, data[i+2:i+2+int(length)]...)
+			i = i + 2 + int(length)
+		}
+	}
+
+	// Return the output byte array.
+	return output, nil
 }
