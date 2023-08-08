@@ -349,3 +349,32 @@ func berOctStr2Bytes(data []byte) ([]byte, error) {
 	// Return the output byte array.
 	return output, nil
 }
+
+func bytes2BerOctStr(data []byte) ([]byte, error) {
+	// chunk data into 64k blocks
+	var chunks [][]byte
+	for len(data) > 0 {
+		if len(data) > 65535 {
+			chunks = append(chunks, data[:65535])
+			data = data[65535:]
+		} else {
+			chunks = append(chunks, data)
+			data = nil
+		}
+	}
+	// create a buffer to store the output
+	var buf bytes.Buffer
+	// constructed octet string { primitive octet string, primitive octet string, ... }
+	// constructe the inner primitive string
+	var inner bytes.Buffer
+	for _, chunk := range chunks {
+		inner.WriteByte(0x04)
+		encodeLength(&inner, len(chunk))
+		inner.Write(chunk)
+	}
+	// construct the outer constructed string
+	buf.WriteByte(0x24)
+	encodeLength(&buf, inner.Len())
+	buf.Write(inner.Bytes())
+	return buf.Bytes(), nil
+}

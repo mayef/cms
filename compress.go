@@ -31,7 +31,7 @@ func Compress(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	compressedBytes := buf.Bytes()
-	marshaled, err := asn1.Marshal(compressedBytes)
+	marshaled, err := bytes2BerOctStr(compressedBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -39,10 +39,10 @@ func Compress(data []byte) ([]byte, error) {
 	// 2. wrap to EncapsulatedContentInfo
 	encapsulated := encapsulatedContentInfo{
 		EContentType: OIDData,
-		EContent: asn1.RawValue{ // prmitive OCTET STRING
-			Class:      asn1.ClassUniversal,
-			Tag:        asn1.TagOctetString,
-			IsCompound: false,
+		EContent: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
 			Bytes:      marshaled,
 		},
 	}
