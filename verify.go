@@ -264,6 +264,8 @@ func (err *MessageDigestMismatchError) Error() string {
 
 func getSignatureAlgorithm(digestEncryption, digest pkix.AlgorithmIdentifier) (SignatureAlgorithm, error) {
 	switch {
+	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmECDSASHA1):
+		return ECDSAWithSHA1, nil
 	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmECDSASHA224):
 		return ECDSAWithSHA224, nil
 	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmECDSASHA256):
@@ -273,11 +275,17 @@ func getSignatureAlgorithm(digestEncryption, digest pkix.AlgorithmIdentifier) (S
 	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmECDSASHA512):
 		return ECDSAWithSHA512, nil
 	case digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSA),
+		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSAMD5),
+		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSASHA1),
 		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSASHA224),
 		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSASHA256),
 		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSASHA384),
 		digestEncryption.Algorithm.Equal(OIDSignatureAlgorithmRSASHA512):
 		switch {
+		case digest.Algorithm.Equal(OIDDigestAlgorithmMD5):
+			return MD5WithRSA, nil
+		case digest.Algorithm.Equal(OIDDigestAlgorithmSHA1):
+			return SHA1WithRSA, nil
 		case digest.Algorithm.Equal(OIDDigestAlgorithmSHA224):
 			return SHA224WithRSA, nil
 		case digest.Algorithm.Equal(OIDDigestAlgorithmSHA256):

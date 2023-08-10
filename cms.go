@@ -49,6 +49,8 @@ var (
 	OIDCompressionAlgorithmZLIB = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 16, 3, 8}
 
 	// Digest Algorithms
+	OIDDigestAlgorithmMD5        = asn1.ObjectIdentifier{1, 2, 840, 113549, 2, 5} // deprecated
+	OIDDigestAlgorithmSHA1       = asn1.ObjectIdentifier{1, 3, 14, 3, 2, 26}      // deprecated
 	OIDDigestAlgorithmSHA256     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 1}
 	OIDDigestAlgorithmSHA384     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 2}
 	OIDDigestAlgorithmSHA512     = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 2, 3}
@@ -65,6 +67,8 @@ var (
 	// Signature Algorithms
 	OIDSignatureAlgorithmRSA       = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
 	OIDSignatureAlgorithmRSAPSS    = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 10}
+	OIDSignatureAlgorithmRSAMD5    = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 4}
+	OIDSignatureAlgorithmRSASHA1   = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 5}
 	OIDSignatureAlgorithmRSASHA256 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 11}
 	OIDSignatureAlgorithmRSASHA384 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 12}
 	OIDSignatureAlgorithmRSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 13}
@@ -75,6 +79,7 @@ var (
 	OIDSignatureAlgorithmRSASHAT384 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 15}
 	OIDSignatureAlgorithmRSASHAT512 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 3, 16}
 
+	OIDSignatureAlgorithmECDSASHA1   = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 1}
 	OIDSignatureAlgorithmECDSASHA256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 2}
 	OIDSignatureAlgorithmECDSASHA384 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 3}
 	OIDSignatureAlgorithmECDSASHA512 = asn1.ObjectIdentifier{1, 2, 840, 10045, 4, 3, 4}
@@ -105,6 +110,11 @@ var (
 
 func getHashForOID(oid asn1.ObjectIdentifier) (crypto.Hash, error) {
 	switch {
+	case oid.Equal(OIDDigestAlgorithmMD5):
+		return crypto.MD5, nil
+	case oid.Equal(OIDDigestAlgorithmSHA1), oid.Equal(OIDSignatureAlgorithmECDSASHA1),
+		oid.Equal(OIDSignatureAlgorithmRSA):
+		return crypto.SHA1, nil
 	case oid.Equal(OIDDigestAlgorithmSHA256), oid.Equal(OIDSignatureAlgorithmECDSASHA256):
 		return crypto.SHA256, nil
 	case oid.Equal(OIDDigestAlgorithmSHA384), oid.Equal(OIDSignatureAlgorithmECDSASHA384):
@@ -137,6 +147,10 @@ func getHashForOID(oid asn1.ObjectIdentifier) (crypto.Hash, error) {
 // and returns the corresponding OID digest algorithm
 func getDigestOIDForSignatureAlgorithm(digestAlg x509.SignatureAlgorithm) (asn1.ObjectIdentifier, error) {
 	switch digestAlg {
+	case x509.MD5WithRSA:
+		return OIDDigestAlgorithmMD5, nil
+	case x509.SHA1WithRSA, x509.ECDSAWithSHA1:
+		return OIDDigestAlgorithmSHA1, nil
 	case x509.SHA256WithRSA, x509.ECDSAWithSHA256:
 		return OIDDigestAlgorithmSHA256, nil
 	case x509.SHA384WithRSA, x509.ECDSAWithSHA384:
@@ -157,6 +171,8 @@ func getOIDForEncryptionAlgorithm(pkey crypto.PrivateKey, OIDDigestAlg asn1.Obje
 			return OIDSignatureAlgorithmRSA, nil
 		case OIDDigestAlg.Equal(OIDSignatureAlgorithmRSA):
 			return OIDSignatureAlgorithmRSA, nil
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA1):
+			return OIDSignatureAlgorithmRSASHA1, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA256):
 			return OIDSignatureAlgorithmRSASHA256, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA384):
@@ -176,6 +192,8 @@ func getOIDForEncryptionAlgorithm(pkey crypto.PrivateKey, OIDDigestAlg asn1.Obje
 		}
 	case *ecdsa.PrivateKey:
 		switch {
+		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA1):
+			return OIDSignatureAlgorithmECDSASHA1, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA256):
 			return OIDSignatureAlgorithmECDSASHA256, nil
 		case OIDDigestAlg.Equal(OIDDigestAlgorithmSHA384):
